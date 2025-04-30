@@ -6,3 +6,9 @@ data Livro = Livro {
     ano :: Int,
     idLivro :: Int
 } deriving (Show, Eq)
+
+data Usuario = Usuario {
+    nome :: String,
+    matricula :: Int,
+    email :: String
+} deriving (Show, Eq)
