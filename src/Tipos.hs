@@ -12,3 +12,8 @@ data Usuario = Usuario {
     matricula :: Int,
     email :: String
 } deriving (Show, Eq)
+
+data Emprestimo = Emprestimo {
+    livro :: Livro,
+    usuario :: Usuario
+} deriving (Show, Eq)
