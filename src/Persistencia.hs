@@ -23,6 +23,19 @@ adicionarLivroIO listaLivro = do
             let novoLivro = Livro titulo autor ano idLivro
             return (adicionarLivro novoLivro listaLivro)
 
+removerLivroIO :: [Livro] -> IO [Livro]
+removerLivroIO listaLivro = do
+    putStrLn "Digite o identificador do livro a ser removido:"
+    idLivro <- readLn
+    case verificaLivro listaLivro idLivro of
+        Just _ -> do
+            putStrLn "Número de identificação não existe!"
+            putStrLn "Tente novamente!"
+            removerLivroIO listaLivro
+        Nothing -> do
+            let novaLista = removerLivro listaLivro idLivro
+            return novaLista
+
 adicionarUsuarioIO :: [Usuario] -> IO [Usuario]
 adicionarUsuarioIO listaUsuario = do
     putStrLn "Digite o número de matricula do usuário:"
