@@ -2,6 +2,7 @@ module Persistencia where
     
 import Tipos
 import Funções
+import System.IO
 
 adicionarLivroIO :: [Livro] -> IO [Livro]
 adicionarLivroIO listaLivro = do
@@ -21,3 +22,20 @@ adicionarLivroIO listaLivro = do
             ano <- readLn
             let novoLivro = Livro titulo autor ano idLivro
             return (adicionarLivro novoLivro listaLivro)
+
+adicionarUsuarioIO :: [Usuario] -> IO [Usuario]
+adicionarUsuarioIO listaUsuario = do
+    putStrLn "Digite o número de matricula do usuário:"
+    matriculaUsuario <- readLn
+    case verificaUsuario listaUsuario matriculaUsuario of
+        Nothing -> do
+            putStrLn "Número de matricula já existe!"
+            putStrLn "Tente novamente!"
+            adicionarUsuarioIO listaUsuario
+        Just _ -> do
+            putStrLn "Digite o nome do usuário:"
+            nome <- getLine
+            putStrLn "Digite o email do usuário:"
+            email <- getLine
+            let novoUsuario = Usuario nome matriculaUsuario email
+            return (adicionarUsuario novoUsuario listaUsuario)
