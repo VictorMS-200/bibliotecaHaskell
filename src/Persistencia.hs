@@ -33,8 +33,7 @@ removerLivroIO listaLivro = do
             putStrLn "Tente novamente!"
             removerLivroIO listaLivro
         Nothing -> do
-            let novaLista = removerLivro listaLivro idLivro
-            return novaLista
+            return (removerLivro listaLivro idLivro)
 
 adicionarUsuarioIO :: [Usuario] -> IO [Usuario]
 adicionarUsuarioIO listaUsuario = do
@@ -52,3 +51,15 @@ adicionarUsuarioIO listaUsuario = do
             email <- getLine
             let novoUsuario = Usuario nome matriculaUsuario email
             return (adicionarUsuario novoUsuario listaUsuario)
+
+removerUsuarioIO :: [Usuario] -> IO [Usuario]
+removerUsuarioIO listaUsuario = do
+    putStrLn "Digite o número de matricula do usuário a ser removido:"
+    matriculaUsuario <- readLn
+    case verificaUsuario listaUsuario matriculaUsuario of
+        Just _ -> do
+            putStrLn "Número de matricula não existe!"
+            putStrLn "Tente novamente!"
+            removerUsuarioIO listaUsuario
+        Nothing -> do
+            return (removerUsuario listaUsuario matriculaUsuario)
