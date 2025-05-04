@@ -5,6 +5,12 @@ import Tipos
 adicionarLivro :: Livro -> [Livro] -> [Livro]
 adicionarLivro novoLivro listaDeLivro = novoLivro : listaDeLivro
 
+removerLivro :: [Livro] -> Int -> [Livro]
+removerLivro listaDeLivro idProcurado
+    | null listaDeLivro = []
+    | idLivro (head listaDeLivro) == idProcurado = tail listaDeLivro
+    | otherwise = head listaDeLivro : removerLivro (tail listaDeLivro) idProcurado
+
 verificaLivro :: [Livro] -> Int -> Maybe ()
 verificaLivro listaDeLivro idProcurado
     | null listaDeLivro = Just ()
@@ -13,6 +19,12 @@ verificaLivro listaDeLivro idProcurado
 
 adicionarUsuario :: Usuario -> [Usuario] -> [Usuario]
 adicionarUsuario novoUsuario listaDeUsuario = novoUsuario : listaDeUsuario
+
+removerUsuario :: [Usuario] -> Int -> [Usuario]
+removerUsuario listaDeUsuario matriculaProcurada
+    | null listaDeUsuario = []
+    | matricula (head listaDeUsuario) == matriculaProcurada = tail listaDeUsuario
+    | otherwise = head listaDeUsuario : removerUsuario (tail listaDeUsuario) matriculaProcurada
 
 verificaUsuario :: [Usuario] -> Int -> Maybe ()
 verificaUsuario listaDeUsuario matriculaProcurado
