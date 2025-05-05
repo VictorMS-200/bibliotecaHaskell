@@ -31,3 +31,9 @@ verificaUsuario listaDeUsuario matriculaProcurado
     | null listaDeUsuario = Just ()
     | matricula (head listaDeUsuario) == matriculaProcurado = Nothing
     | otherwise = verificaUsuario (tail listaDeUsuario) matriculaProcurado
+
+listarLista :: Show a => [a] -> IO ()
+listarLista [] = putStrLn "Lista vazia!"
+listarLista lista = do
+    putStrLn "Lista:"
+    mapM_ (putStrLn . show) lista
