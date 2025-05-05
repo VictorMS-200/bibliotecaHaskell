@@ -2,6 +2,20 @@ module Funções where
 
 import Tipos
 
+acharLivroMatricula :: [Livro] -> Int -> Maybe Livro
+acharLivroMatricula [] _ = Nothing
+acharLivroMatricula listaDeLivros matriculaProcurada
+    | null listaDeLivros = Nothing
+    | idLivro (head listaDeLivros) == matriculaProcurada = Just (head listaDeLivros)
+    | otherwise = acharLivroMatricula (tail listaDeLivros) matriculaProcurada
+
+acharUsuarioMatricula :: [Usuario] -> Int -> Maybe Usuario
+acharUsuarioMatricula [] _ = Nothing
+acharUsuarioMatricula listaDeUsuarios matriculaProcurada
+    | null listaDeUsuarios = Nothing
+    | matricula (head listaDeUsuarios) == matriculaProcurada = Just (head listaDeUsuarios)
+    | otherwise = acharUsuarioMatricula (tail listaDeUsuarios) matriculaProcurada
+
 adicionarLivro :: Livro -> [Livro] -> [Livro]
 adicionarLivro novoLivro listaDeLivro = novoLivro : listaDeLivro
 
@@ -37,3 +51,6 @@ listarLista [] = putStrLn "Lista vazia!"
 listarLista lista = do
     putStrLn "Lista:"
     mapM_ (putStrLn . show) lista
+
+registrarEmprestimo :: Livro -> Usuário -> [Empréstimo] -> [Empréstimo]
+registrarEmprestimo livro usuario listaDeEmprestimos = Emprestimo livro usuario : listaDeEmprestimos
