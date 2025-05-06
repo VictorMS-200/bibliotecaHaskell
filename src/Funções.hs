@@ -57,3 +57,7 @@ listarLista lista = do
 
 registrarEmprestimo :: Livro -> Usuario -> [Emprestimo] -> [Emprestimo]
 registrarEmprestimo livro usuario listaDeEmprestimos = Emprestimo livro usuario [] : listaDeEmprestimos
+
+registrarDevolucao :: Livro -> Usuario -> [Emprestimo] -> [Emprestimo]
+registrarDevolucao livro usuario listaDeEmprestimos = Emprestimo livro usuario [] : removerEmprestimo listaDeEmprestimos livro
+
