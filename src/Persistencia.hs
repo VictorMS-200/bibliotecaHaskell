@@ -147,4 +147,27 @@ processarDevolucao livroDevolvido usuarioDevolucao listaEmprestimos = do
             let novoEmprestimoAtualizado = Emprestimo { livro = livroDevolvido, usuario = usuarioPrimeiroListaEspera, listaDeEspera = listaDeEsperaAtualizada }
             putStrLn "Devolução registrada com sucesso!"
             return (novoEmprestimoAtualizado : removerEmprestimo listaEmprestimos livroDevolvido)
-    
+
+listarLivrosIO :: [Livro] -> IO ()
+listarLivrosIO listaLivro = do
+    putStrLn "Lista de livros disponíveis:"
+    listarLista [l | l <- listaLivro, l `notElem` (map livro e)]
+    putStrLn "Lista de livros emprestados:"
+    listarLista [l | l <- listaLivro, l `elem` (map livro e)]
+
+listarListasEsperaIO :: [Emprestimo] -> IO ()
+listarListasEsperaIO listaEmprestimos = do
+    livroListar <- solicitarEntrada "Digite o identificador do livro:"
+    case acharLivroIdentificador (map livro listaEmprestimos) livroListar of
+        Nothing -> do
+            putStrLn "Livro não se encontrar na lista de empréstimos ou não existe!"
+            listarListasEsperaIO listaEmprestimos
+        Just livroEncontrado -> do
+            let emprestimoEncontrado = filter (\x -> livro x == livroEncontrado) listaEmprestimos
+            if null emprestimoEncontrado then do
+                putStrLn "Nenhum usuário na lista de espera!"
+                return ()
+            else do
+                putStrLn "Lista de espera:"
+                listarLista (listaDeEspera (head emprestimoEncontrado))
+

@@ -52,7 +52,6 @@ verificaUsuario listaDeUsuario matriculaProcurado
 listarLista :: Show a => [a] -> IO ()
 listarLista [] = putStrLn "Lista vazia!"
 listarLista lista = do
-    putStrLn "Lista:"
     mapM_ (putStrLn . show) lista
 
 registrarEmprestimo :: Livro -> Usuario -> [Emprestimo] -> [Emprestimo]
