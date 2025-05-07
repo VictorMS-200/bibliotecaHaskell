@@ -15,5 +15,6 @@ data Usuario = Usuario {
 
 data Emprestimo = Emprestimo {
     livro :: Livro,
-    usuario :: Usuario
+    usuario :: Usuario,
+    listaDeEspera :: [Usuario]
 } deriving (Show, Eq, Read)
