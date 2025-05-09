@@ -1,9 +1,17 @@
-import Text.XHtml (menu)
+module Menu where
+import Tipos
+import Funções
+import Persistencia
+import System.IO
+import Control.Monad.RWS.Class (MonadState(put))
+
+
 exibirOpcoes :: [String] -> IO ()
 exibirOpcoes opcoes = do
-    putStrLn "\nEscolha uma opção:\n"
+    putStrLn "========================="
+    putStrLn "Escolha uma opção:"
+    putStrLn "========================="
     putStrLn (unlines opcoes)
-    putStrLn ""
 
 lerOpcao :: Int -> Int -> IO Int
 lerOpcao min max = do
@@ -86,27 +94,87 @@ menuEditarUsuario = do
     exibirOpcoes opcoes
     lerOpcao 1 4
 
-laçoMenu :: IO ()
-laçoMenu = do
+laçoMenu :: [Livro] -> [Usuario] -> [Emprestimo] -> IO ()
+laçoMenu livros usuarios emprestimos = do
     opcao <- menuPrincipal
     case opcao of
         1 -> do
-            opcaoLivros <- menuLivros
-            laçoMenu
+            livrosAtualizados <- laçoMenuLivros livros emprestimos
+            laçoMenu livrosAtualizados usuarios emprestimos
         2 -> do
-            opcaoUsuarios <- menuUsuarios
-            laçoMenu
+            usuariosAtualizados <- laçoMenuUsuarios usuarios
+            laçoMenu livros usuariosAtualizados emprestimos
         3 -> do
-            opcaoEmprestimos <- menuEmprestimos
-            laçoMenu
+            emprestimosAtualizados <- laçoMenuEmprestimos livros usuarios emprestimos
+            laçoMenu livros usuarios emprestimosAtualizados
         4 -> do
             opcaoRelatorios <- menuRelatorios
-            laçoMenu
+            laçoMenu livros usuarios emprestimos
         5 -> do
             opcaoEditarLivro <- menuEditarLivro
-            laçoMenu
+            laçoMenu livros usuarios emprestimos
         6 -> do
             opcaoEditarUsuario <- menuEditarUsuario
-            laçoMenu
+            laçoMenu livros usuarios emprestimos
         7 -> putStrLn "Saindo..."
         _ -> putStrLn "Opção inválida. Tente novamente."
+
+
+laçoMenuLivros :: [Livro] -> [Emprestimo] -> IO [Livro]
+laçoMenuLivros livros emprestimos = do
+    opcao <- menuLivros
+    case opcao of
+        1 -> do
+            putStrLn "Adicionar livro:"
+            adicionarLivroIO livros 
+        2 -> do
+            putStrLn "Listar livros:"
+            listarLivrosIO livros emprestimos
+            return livros
+        3 -> do
+            putStrLn "Remover livro:"
+            removerLivroIO livros
+        4 -> do
+            putStrLn "Voltando..."
+            return livros
+
+laçoMenuUsuarios :: [Usuario] -> IO [Usuario]
+laçoMenuUsuarios usuarios = do
+    opcao <- menuUsuarios
+    case opcao of
+        1 -> do
+            putStrLn "Adicionar usuário:"
+            adicionarUsuarioIO usuarios 
+        2 -> do
+            putStrLn "Listar usuários:"
+            listarLista usuarios
+            return usuarios
+        3 -> do
+            putStrLn "Remover usuário:"
+            removerUsuarioIO usuarios
+        4 -> do
+            putStrLn "Voltando..."
+            return usuarios
+
+laçoMenuEmprestimos :: [Livro] -> [Usuario] -> [Emprestimo] -> IO [Emprestimo]
+laçoMenuEmprestimos livros usuarios emprestimos = do
+    opcao <- menuEmprestimos
+    case opcao of
+        1 -> do
+            putStrLn "Realizar empréstimo:"
+            emprestimosAtualizados <- registrarEmprestimoIO livros usuarios emprestimos
+            return emprestimosAtualizados
+        2 -> do
+            putStrLn "Realizar devolução:"
+            emprestimosAtualizados <- registrarDevolucaoIO livros usuarios emprestimos
+            return emprestimosAtualizados
+        3 -> do
+            putStrLn "Listar empréstimos:"
+            listarLista emprestimos
+            return emprestimos
+        4 -> do
+            putStrLn "Listar espera:"
+            return emprestimos
+        5 -> do
+            putStrLn "Voltando..."
+            return emprestimos

@@ -3,10 +3,7 @@ module Persistencia where
 import Tipos
 import Funções
 import System.IO
-
-livrosInicial = [Livro "Titulo1" "autor" 2025 01, Livro "Titulo2" "autor02" 2024 02, Livro "Titulo3" "autor03" 2023 03]
-uI = [Usuario "Nome0" 01 "example@email.com", Usuario "Nome1" 02 "example@email.com", Usuario "Nome2" 03 "example@email.com"]
-e = [Emprestimo (Livro "Titulo1" "autor" 2025 01) (Usuario "Nome0" 01 "example@email.com") [Usuario "Nome1" 02 "example@email.com", Usuario "Nome2" 03 "example@email.com"]]
+import Tipos (Emprestimo)
 
 solicitarEntrada :: Read a => String -> IO a
 solicitarEntrada mensagem = do
@@ -102,8 +99,9 @@ gerenciarListaDeEspera livroEmprestado usuarioEmprestimo listaEmprestimos = do
     resposta <- getLine
     case resposta of
         "s" -> do
-            let listaDeEsperaAtualizada = adicionarData usuarioEmprestimo (listaDeEspera (head (filter (\x -> livro x == livroEmprestado) listaEmprestimos)))
-            let novoEmprestimo = Emprestimo livroEmprestado usuarioEmprestimo listaDeEsperaAtualizada
+            let listaDeEsperaAtualizada = (listaDeEspera (head (filter (\x -> livro x == livroEmprestado) listaEmprestimos))) ++ [usuarioEmprestimo]
+            let emprestimoAtualizado = head (filter (\x -> livro x == livroEmprestado) listaEmprestimos)
+            let novoEmprestimo = Emprestimo livroEmprestado (usuario emprestimoAtualizado) listaDeEsperaAtualizada
             return (novoEmprestimo : removerEmprestimo listaEmprestimos livroEmprestado)
         "n" -> do
             putStrLn "Usuário não foi adicionado a lista de espera!"
@@ -148,12 +146,12 @@ processarDevolucao livroDevolvido usuarioDevolucao listaEmprestimos = do
             putStrLn "Devolução registrada com sucesso!"
             return (novoEmprestimoAtualizado : removerEmprestimo listaEmprestimos livroDevolvido)
 
-listarLivrosIO :: [Livro] -> IO ()
-listarLivrosIO listaLivro = do
+listarLivrosIO :: [Livro] -> [Emprestimo] -> IO ()
+listarLivrosIO listaLivro emprestimos = do
     putStrLn "Lista de livros disponíveis:"
-    listarLista [l | l <- listaLivro, l `notElem` (map livro e)]
+    listarLista [l | l <- listaLivro, l `notElem` (map livro emprestimos)]
     putStrLn "Lista de livros emprestados:"
-    listarLista [l | l <- listaLivro, l `elem` (map livro e)]
+    listarLista [l | l <- listaLivro, l `elem` (map livro emprestimos)]
 
 listarListasEsperaIO :: [Emprestimo] -> IO ()
 listarListasEsperaIO listaEmprestimos = do
@@ -171,3 +169,36 @@ listarListasEsperaIO listaEmprestimos = do
                 putStrLn "Lista de espera:"
                 listarLista (listaDeEspera (head emprestimoEncontrado))
 
+
+listarEmprestadosEDisponiveis :: [Livro] -> [Emprestimo] -> IO ()
+listarEmprestadosEDisponiveis livros emprestimos = do
+  let codigosEmprestados = map codLivro (filter (\e -> dataDevolucao e == Nothing) emprestimos)
+  let emprestados = filter (\l -> codigo l elem codigosEmprestados) livros
+  let disponiveis = filter (\l -> codigo l notElem codigosEmprestados) livros
+
+  putStrLn "=== Livros Emprestados ==="
+  listarLista emprestados
+
+  putStrLn "\n=== Livros Disponíveis ==="
+  listarLista disponiveis
+
+historicoEmprestimoUsuario :: Int -> [Emprestimo] -> IO ()
+historicoEmprestimoUsuario matricula emprestimos = do
+  let historico = filter (\e -> matUsuario e == matricula) emprestimos
+  putStrLn ("=== Histórico de Empréstimos do Usuário " ++ show matricula ++ " ===")
+  listarLista historico
+
+listarListaEsperaUsuarios :: [Livro] -> [Usuario] -> [Espera] -> IO ()
+listarListaEsperaUsuarios [] _ _ = return ()
+listarListaEsperaUsuarios (livro:livros) usuarios esperas = do
+  let codigoLivroAtual = codigo livro
+  let esperasDoLivro = filter (\e -> codLivroEspera e == codigoLivroAtual) esperas
+  let matriculas = map matUsuarioEspera esperasDoLivro
+  let usuariosNaEspera = filter (\u -> matricula u elem matriculas) usuarios
+
+  if not (null usuariosNaEspera)
+    then do
+      putStrLn ("\"" ++ titulo livro ++ "\"")
+      listarLista usuariosNaEspera
+      putStrLn ""
+    else return ()
