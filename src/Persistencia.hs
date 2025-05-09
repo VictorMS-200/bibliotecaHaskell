@@ -4,6 +4,7 @@ import Tipos
 import Funções
 import System.IO
 import Tipos (Emprestimo)
+import System.Directory (doesFileExist)
 
 solicitarEntrada :: Read a => String -> IO a
 solicitarEntrada mensagem = do
@@ -84,7 +85,8 @@ registrarEmprestimoIO listaLivro listaUsuario listaEmprestimos = do
 processarEmprestimo :: Livro -> Usuario -> [Emprestimo] -> IO [Emprestimo]
 processarEmprestimo livroEmprestado usuarioEmprestimo listaEmprestimos =
     if elem livroEmprestado (map livro listaEmprestimos) then
-        if elem usuarioEmprestimo (map usuario listaEmprestimos) then do
+        -- Verifica se o usuario é o mesmo que o usuario do emprestimo
+        if usuarioEmprestimo == usuario (head (filter (\x -> livro x == livroEmprestado) listaEmprestimos)) then do
             putStrLn "Usuário já possui o livro emprestado!"
             return listaEmprestimos
         else gerenciarListaDeEspera livroEmprestado usuarioEmprestimo listaEmprestimos
@@ -171,34 +173,179 @@ listarListasEsperaIO listaEmprestimos = do
 
 
 listarEmprestadosEDisponiveis :: [Livro] -> [Emprestimo] -> IO ()
-listarEmprestadosEDisponiveis livros emprestimos = do
-  let codigosEmprestados = map codLivro (filter (\e -> dataDevolucao e == Nothing) emprestimos)
-  let emprestados = filter (\l -> codigo l elem codigosEmprestados) livros
-  let disponiveis = filter (\l -> codigo l notElem codigosEmprestados) livros
+listarEmprestadosEDisponiveis listaLivro emprestimos = do
+    putStrLn "Livros disponíveis:"
+    listarLista [l | l <- listaLivro, l `notElem` (map livro emprestimos)]
+    putStrLn "Livros emprestados:"
+    listarLista [l | l <- listaLivro, l `elem` (map livro emprestimos)]
 
-  putStrLn "=== Livros Emprestados ==="
-  listarLista emprestados
 
-  putStrLn "\n=== Livros Disponíveis ==="
-  listarLista disponiveis
+historicoEmprestimoUsuario :: [Usuario] -> [Emprestimo] -> IO ()
+historicoEmprestimoUsuario listaUsuarios emprestimos = do
+    matriculaUsuario <- solicitarEntrada "Digite o número de matricula do usuário:"
+    case acharUsuarioMatricula listaUsuarios matriculaUsuario of
+        Nothing -> do
+            putStrLn "Número de matricula não existe!"
+            historicoEmprestimoUsuario listaUsuarios emprestimos
+        Just usuarioEncontrado -> do
+            let emprestimosUsuario = filter (\x -> matricula (usuario x) == matriculaUsuario) emprestimos
+            if null emprestimosUsuario then do
+                putStrLn "Nenhum empréstimo encontrado para o usuário."
+            else do
+                putStrLn "Histórico de empréstimos do usuário:"
+                listarLista emprestimosUsuario
+-- Exibir livros que apresentem lista de espera n˜ao vazia, juntamente com os usu´arios presentes nesta lista.
+listarListaEsperaUsuarios :: [Livro] -> [Usuario] -> [Emprestimo] -> IO ()
+listarListaEsperaUsuarios listaLivro listaUsuario emprestimos = do
+    putStrLn "Livros com lista de espera:"
+    let livrosComListaEspera = filter (\x -> not (null (listaDeEspera x))) emprestimos
+    if null livrosComListaEspera then do
+        putStrLn "Nenhum livro com lista de espera."
+    else do
+        mapM_ (\x -> do
+            putStrLn ("Livro: " ++ show (livro x))
+            putStrLn "Usuários na lista de espera:"
+            listarLista (listaDeEspera x)) livrosComListaEspera
 
-historicoEmprestimoUsuario :: Int -> [Emprestimo] -> IO ()
-historicoEmprestimoUsuario matricula emprestimos = do
-  let historico = filter (\e -> matUsuario e == matricula) emprestimos
-  putStrLn ("=== Histórico de Empréstimos do Usuário " ++ show matricula ++ " ===")
-  listarLista historico
 
-listarListaEsperaUsuarios :: [Livro] -> [Usuario] -> [Espera] -> IO ()
-listarListaEsperaUsuarios [] _ _ = return ()
-listarListaEsperaUsuarios (livro:livros) usuarios esperas = do
-  let codigoLivroAtual = codigo livro
-  let esperasDoLivro = filter (\e -> codLivroEspera e == codigoLivroAtual) esperas
-  let matriculas = map matUsuarioEspera esperasDoLivro
-  let usuariosNaEspera = filter (\u -> matricula u elem matriculas) usuarios
+editarUsuarioNomeIO :: [Usuario] -> IO [Usuario]
+editarUsuarioNomeIO usuarios = do
+    putStrLn "Digite a matrícula do usuário:"
+    m <- readLn
+    case acharUsuarioMatricula usuarios m of
+        Nothing -> do
+            putStrLn "Usuário não encontrado."
+            return usuarios
+        Just u -> do
+            putStrLn "Digite o novo nome:"
+            novoNome <- getLine
+            let uAtualizado = u { nome = novoNome }
+            return (uAtualizado : removerUsuario usuarios m)
 
-  if not (null usuariosNaEspera)
-    then do
-      putStrLn ("\"" ++ titulo livro ++ "\"")
-      listarLista usuariosNaEspera
-      putStrLn ""
-    else return ()
+editarUsuarioEmailIO :: [Usuario] -> IO [Usuario]
+editarUsuarioEmailIO usuarios = do
+    putStrLn "Digite a matrícula do usuário:"
+    m <- readLn
+    case acharUsuarioMatricula usuarios m of
+        Nothing -> do
+            putStrLn "Usuário não encontrado."
+            return usuarios
+        Just u -> do
+            putStrLn "Digite o novo email:"
+            novoEmail <- getLine
+            let uAtualizado = u { email = novoEmail }
+            return (uAtualizado : removerUsuario usuarios m)
+
+editarUsuarioMatricIO :: [Usuario] -> IO [Usuario]
+editarUsuarioMatricIO usu = do
+    putStrLn "Digite a matrícula do usuário:"
+    mat <- readLn
+    case acharUsuarioMatricula usu mat of
+       Nothing -> do
+          putStrLn "Usuário não encontrado."
+          return usu
+       Just u -> do
+          putStrLn "Digite a nova matrícula:"
+          novMat <- readLn
+          case acharUsuarioMatricula usu novMat of
+             Nothing -> do
+                let matAtualizada = u { matricula = novMat }
+                return (matAtualizada : removerUsuario usu mat)
+             Just _ -> do
+                putStrLn "Matrícula dada já está atribuída a um usuário."
+                return usu
+
+editarLivroTituloIO :: [Livro] -> IO [Livro]
+editarLivroTituloIO livros = do
+    putStrLn "Digite o ID do livro:"
+    idLivroEditar <- readLn
+    case acharLivroIdentificador livros idLivroEditar of
+        Nothing -> do
+            putStrLn "Livro não encontrado."
+            return livros
+        Just l -> do
+            putStrLn "Digite o novo título:"
+            novoTitulo <- getLine
+            let livroAtualizado = l { titulo = novoTitulo }
+            return (livroAtualizado : removerLivro livros idLivroEditar)
+
+editarLivroAutorIO :: [Livro] -> IO [Livro]
+editarLivroAutorIO livros = do
+    putStrLn "Digite o ID do livro:"
+    idLivroEditar <- readLn
+    case acharLivroIdentificador livros idLivroEditar of
+        Nothing -> do
+            putStrLn "Livro não encontrado."
+            return livros
+        Just l -> do
+            putStrLn "Digite o novo autor:"
+            novoAutor <- getLine
+            let livroAtualizado = l { autor = novoAutor }
+            return (livroAtualizado : removerLivro livros idLivroEditar)
+
+editarLivroAnoIO :: [Livro] -> IO [Livro]
+editarLivroAnoIO livros = do
+    putStrLn "Digite o ID do livro:"
+    idLivroEditar <- readLn
+    case acharLivroIdentificador livros idLivroEditar of
+        Nothing -> do
+            putStrLn "Livro não encontrado."
+            return livros
+        Just l -> do
+            putStrLn "Digite o novo ano:"
+            novoAno <- readLn
+            let livroAtualizado = l { ano = novoAno }
+            return (livroAtualizado : removerLivro livros idLivroEditar)
+
+editarLivroIDIO:: [Livro] -> IO [Livro]
+editarLivroIDIO livros = do
+    putStrLn "Digite o ID do Livro:"
+    idLivroEdit <- readLn
+    case acharLivroIdentificador livros idLivroEdit of
+        Nothing -> do
+           putStrLn "Livro não encontrado."
+           return livros
+        Just l -> do
+          putStrLn "Digite o novo ID:"
+          novoID <- readLn
+          case acharLivroIdentificador livros novoID of
+             Nothing -> do
+                let livroAtualizado = l { idLivro = novoID }
+                return (livroAtualizado : removerLivro livros idLivroEdit)
+             Just _ -> do
+                putStrLn "Já existe um livro com esse ID!"
+                return livros
+
+salvarBibliotecaIO :: [Livro] -> [Usuario] -> [Emprestimo] -> IO ()
+salvarBibliotecaIO livros usuarios emprestimos = do
+    existeArquivo <- doesFileExist "biblioteca.txt"
+    if not existeArquivo then do
+        putStrLn "O arquivo biblioteca.txt não existe. Deseja criar um novo? (S/N)"
+        resposta <- getLine
+        case resposta of
+            "s" -> do
+                arquivo <- openFile "biblioteca.txt" WriteMode
+                hPutStrLn arquivo (show livros)
+                hPutStrLn arquivo (show usuarios)
+                hPutStrLn arquivo (show emprestimos)
+                hClose arquivo
+                putStrLn "Arquivo criado com sucesso."
+            "n" -> putStrLn "Operação cancelada."
+            _ -> do
+                putStrLn "Opção inválida!"
+                salvarBibliotecaIO livros usuarios emprestimos
+    else do
+        putStrLn "Arquivo biblioteca.txt já existe. Deseja sobrescrevê-lo? (S/N)"
+        resposta <- getLine
+        case resposta of
+            "s" -> do
+                arquivo <- openFile "biblioteca.txt" WriteMode
+                hPutStrLn arquivo (show livros)
+                hPutStrLn arquivo (show usuarios)
+                hPutStrLn arquivo (show emprestimos)
+                hClose arquivo
+                putStrLn "Arquivo sobrescrito com sucesso."
+            "n" -> putStrLn "Operação cancelada."
+            _ -> do
+                putStrLn "Opção inválida!"
+                salvarBibliotecaIO livros usuarios emprestimos

@@ -108,15 +108,15 @@ laçoMenu livros usuarios emprestimos = do
             emprestimosAtualizados <- laçoMenuEmprestimos livros usuarios emprestimos
             laçoMenu livros usuarios emprestimosAtualizados
         4 -> do
-            opcaoRelatorios <- menuRelatorios
+            laçoMenuRelatorios livros usuarios emprestimos
             laçoMenu livros usuarios emprestimos
         5 -> do
-            opcaoEditarLivro <- menuEditarLivro
-            laçoMenu livros usuarios emprestimos
+            livrosAtualizados <- laçoMenuEditarLivro livros
+            laçoMenu livrosAtualizados usuarios emprestimos
         6 -> do
-            opcaoEditarUsuario <- menuEditarUsuario
-            laçoMenu livros usuarios emprestimos
-        7 -> putStrLn "Saindo..."
+            usuariosAtualizados <- laçoMenuEditarUsuario usuarios
+            laçoMenu livros usuariosAtualizados emprestimos
+        7 -> salvarBibliotecaIO livros usuarios emprestimos >> putStrLn "Dados salvos. Saindo..."
         _ -> putStrLn "Opção inválida. Tente novamente."
 
 
@@ -178,3 +178,60 @@ laçoMenuEmprestimos livros usuarios emprestimos = do
         5 -> do
             putStrLn "Voltando..."
             return emprestimos
+
+laçoMenuRelatorios :: [Livro] -> [Usuario] -> [Emprestimo] -> IO ()
+laçoMenuRelatorios livros usuarios emprestimos = do
+    opcao <- menuRelatorios
+    case opcao of
+        1 -> do
+            putStrLn "Relatório de empréstimos:"
+            listarEmprestadosEDisponiveis livros emprestimos
+            return ()
+        2 -> do
+            putStrLn "Histórico de empréstimos do usuário:"
+            historicoEmprestimoUsuario usuarios emprestimos
+            return ()
+        3 -> do
+            putStrLn "Livros com lista de espera:"
+            listarListaEsperaUsuarios livros usuarios emprestimos
+            return ()
+        4 -> do
+            putStrLn "Voltando..."
+            return ()
+
+laçoMenuEditarUsuario :: [Usuario] -> IO [Usuario]
+laçoMenuEditarUsuario usuarios = do
+    opcao <- menuEditarUsuario
+    case opcao of
+        1 -> do
+            putStrLn "Editar matrícula do usuário:"
+            editarUsuarioMatricIO usuarios 
+        2 -> do
+            putStrLn "Editar nome do usuário:"
+            editarUsuarioNomeIO usuarios 
+        3 -> do
+            putStrLn "Editar email do usuário:"
+            editarUsuarioEmailIO usuarios 
+        4 -> do
+            putStrLn "Voltando..."
+            return usuarios
+
+laçoMenuEditarLivro :: [Livro] -> IO [Livro]
+laçoMenuEditarLivro livros = do
+    opcao <- menuEditarLivro
+    case opcao of
+        1 -> do
+            putStrLn "Editar ID do livro:"
+            editarLivroIDIO livros 
+        2 -> do
+            putStrLn "Editar título do livro:"
+            editarLivroTituloIO livros 
+        3 -> do
+            putStrLn "Editar autor do livro:"
+            editarLivroAutorIO livros 
+        4 -> do
+            putStrLn "Editar ano do livro:"
+            editarLivroAnoIO livros 
+        5 -> do
+            putStrLn "Voltando..."
+            return livros
