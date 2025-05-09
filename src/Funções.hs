@@ -2,6 +2,12 @@ module Funções where
 
 import Tipos
 
+tituloMsg :: String -> IO ()
+tituloMsg mensagem = do
+    putStrLn "========================="
+    putStrLn mensagem
+    putStrLn "========================="
+
 acharLivroIdentificador :: [Livro] -> Int -> Maybe Livro
 acharLivroIdentificador [] _ = Nothing
 acharLivroIdentificador listaDeLivros matriculaProcurada
